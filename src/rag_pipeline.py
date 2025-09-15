@@ -36,7 +36,8 @@ def load_llm():
 
 def load_rag_pipeline(index_path="memory/character_index"):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vectorstore = FAISS.load_local(index_path, embeddings)
+    vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+
 
     llm = load_llm()
 
