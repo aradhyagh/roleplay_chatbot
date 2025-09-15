@@ -24,6 +24,7 @@ if "memory" not in st.session_state:
         st.success("✅ SemanticMemory initialized successfully")
     except Exception as e:
         st.error(f"❌ Error initializing SemanticMemory: {e}")
+        st.stop()  # Stop further execution to avoid cascading errors
 
 # Initialize chat history
 if "chat_history" not in st.session_state:
