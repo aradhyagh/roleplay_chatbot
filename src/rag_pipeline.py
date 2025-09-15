@@ -29,19 +29,23 @@ def load_llm():
 def load_rag_pipeline(index_path="memory/character_index"):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    # ✅ Check if FAISS index exists
     index_file = os.path.join(index_path, "index.faiss")
     pkl_file = os.path.join(index_path, "index.pkl")
+
+    print("[DEBUG] Checking FAISS index at:", index_path)
+    print("[DEBUG] index.faiss exists?", os.path.exists(index_file))
+    print("[DEBUG] index.pkl exists?", os.path.exists(pkl_file))
 
     if not (os.path.exists(index_file) and os.path.exists(pkl_file)):
         print("[INFO] No FAISS index found. Building a new one...")
         build_character_index(yaml_path="data/character.yaml", save_path=index_path)
+        print("[INFO] Finished building index.")
 
-    # ✅ Now safely load
+    print("[INFO] Loading FAISS index...")
     vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+    print("[INFO] FAISS index loaded successfully!")
 
     llm = load_llm()
-
     qa = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=vectorstore.as_retriever(),
