@@ -13,6 +13,24 @@ if not os.path.exists("memory/character_index"):
 from src.rag_pipeline import load_rag_pipeline, ask_character
 from src.memory_faiss import SemanticMemory
 
+import os
+
+# Debug: Check if FAISS files exist
+def debug_check_faiss_files():
+    folder_path = "memory/character_index"
+    st.write("🧾 Checking FAISS files in memory/character_index...")
+    if os.path.exists(folder_path):
+        files = os.listdir(folder_path)
+        st.write("📁 Files found:", files)
+        if "index.faiss" in files and "index.pkl" in files:
+            st.success("✅ FAISS index is present and ready!")
+        else:
+            st.error("❌ FAISS index files missing! App will crash.")
+    else:
+        st.warning("⚠️ Folder memory/character_index does not exist.")
+debug_check_faiss_files()
+
+
 # Streamlit settings
 st.set_page_config(page_title="Roleplay Chatbot", page_icon="✨", layout="centered")
 
