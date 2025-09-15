@@ -49,7 +49,6 @@ def build_character_index(yaml_path="data/character.yaml", save_path="memory/cha
     vectorstore.save_local(save_path)
     print("[DEBUG] save_local done, files saved in", save_path)
 
-    # RETURN the vectorstore object so caller can use it directly (no need to load from disk)
     return vectorstore
 
 if __name__ == "__main__":
