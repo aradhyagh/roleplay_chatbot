@@ -1,12 +1,12 @@
 # Core LLM + RAG
-langchain>=0.2.0
+langchain
 langchain-community>=0.2.0
 
 # Vector database
 faiss-cpu
 
 # OpenAI API
-openai>=1.0.0
+openai
 
 # YAML
 pyyaml
