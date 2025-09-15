@@ -17,3 +17,7 @@ streamlit
 # Optional
 tiktoken        # tokenizer for OpenAI
 python-dotenv   # load API keys from .env
+
+sentence-transformers>=2.2.2
+langchain>=0.0.310
+langchain-community>=0.0.9
