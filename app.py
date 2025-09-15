@@ -2,39 +2,33 @@
 
 import os
 import streamlit as st
-
-# 👇 Build index first if it doesn't exist
 from src.embeddings import build_character_index
-if not os.path.exists("memory/character_index"):
-    st.write("🛠️ Building character index...")
-    build_character_index()
 
-# 👇 Now import everything that depends on the index
+# ✅ Step 1: Debug — list folder contents
+def debug_check_faiss_files():
+    st.subheader("🔍 FAISS File Debug Info")
+    folder_path = "memory/character_index"
+    if os.path.exists(folder_path):
+        files = os.listdir(folder_path)
+        st.write("📁 Found in memory/character_index:", files)
+        if "index.faiss" in files and "index.pkl" in files:
+            st.success("✅ FAISS index is present.")
+        else:
+            st.error("❌ FAISS files are missing. Attempting to rebuild...")
+            build_character_index()
+    else:
+        st.warning("⚠️ Folder does not exist. Creating and building index...")
+        build_character_index()
+
+# Run debug function BEFORE anything else
+debug_check_faiss_files()
+
+# ✅ Step 2: Now load the chatbot pipeline
 from src.rag_pipeline import load_rag_pipeline, ask_character
 from src.memory_faiss import SemanticMemory
 
-import os
-
-# Debug: Check if FAISS files exist
-def debug_check_faiss_files():
-    folder_path = "memory/character_index"
-    st.write("🧾 Checking FAISS files in memory/character_index...")
-    if os.path.exists(folder_path):
-        files = os.listdir(folder_path)
-        st.write("📁 Files found:", files)
-        if "index.faiss" in files and "index.pkl" in files:
-            st.success("✅ FAISS index is present and ready!")
-        else:
-            st.error("❌ FAISS index files missing! App will crash.")
-    else:
-        st.warning("⚠️ Folder memory/character_index does not exist.")
-debug_check_faiss_files()
-
-
-# Streamlit settings
 st.set_page_config(page_title="Roleplay Chatbot", page_icon="✨", layout="centered")
 
-# Load RAG pipeline + memory once
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = load_rag_pipeline()
 
@@ -44,10 +38,8 @@ if "memory" not in st.session_state:
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# UI title
 st.title("🧙 Roleplay Chatbot - Seraphina Nightbloom")
 
-# Get user input
 user_input = st.chat_input("Say something to Seraphina...")
 
 if user_input:
@@ -62,7 +54,6 @@ if user_input:
     st.session_state.chat_history.append(("user", user_input))
     st.session_state.chat_history.append(("character", response))
 
-# Display conversation
 for role, text in st.session_state.chat_history:
     if role == "user":
         with st.chat_message("user"):
