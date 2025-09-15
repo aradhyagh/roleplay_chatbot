@@ -1,8 +1,22 @@
 # app.py
 
+
 import os
 import streamlit as st
 from src.embeddings import build_character_index
+
+# Check if character index exists BEFORE loading anything else
+from src.embeddings import build_character_index
+
+if not os.path.exists("memory/character_index"):
+    st.write("⚠️ 'character_index' not found. Building it now...")
+    build_character_index()
+    st.write("✅ Done building index!")
+
+# Now import the rest (AFTER index is ready)
+from src.rag_pipeline import load_rag_pipeline, ask_character
+from src.memory_faiss import SemanticMemory
+
 
 # ✅ Step 1: Debug — list folder contents
 def debug_check_faiss_files():
