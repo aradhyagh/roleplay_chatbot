@@ -18,7 +18,7 @@ def build_character_index(yaml_path="data/character.yaml", save_path="memory/cha
     os.makedirs(save_path, exist_ok=True)
 
     # Load YAML
-    with open(yaml_path, "r") as f:
+    with open(yaml_path, "r", encoding="utf-8") as f:
         character_data = yaml.safe_load(f)
     print("[DEBUG] YAML loaded")
 
@@ -48,6 +48,9 @@ def build_character_index(yaml_path="data/character.yaml", save_path="memory/cha
     # Save both required files
     vectorstore.save_local(save_path)
     print("[DEBUG] save_local done, files saved in", save_path)
-    
+
+    # RETURN the vectorstore object so caller can use it directly (no need to load from disk)
+    return vectorstore
+
 if __name__ == "__main__":
     build_character_index()
