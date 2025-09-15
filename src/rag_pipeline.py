@@ -1,7 +1,8 @@
 # src/rag_pipeline.py
+
 import os
-from langchain.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from src.embeddings import build_character_index
 
@@ -16,54 +17,37 @@ def load_llm():
                 temperature=0.7,
                 max_tokens=256
             )
-    except Exception:
-        pass
+    except Exception as e:
+        print("[WARN] ChatOpenAI not available or no API key:", e)
 
-    # fallback to HuggingFace
     from langchain import HuggingFacePipeline
     from transformers import pipeline
     print("[INFO] Using HuggingFace flan-t5-base (local)")
     generator = pipeline("text2text-generation", model="google/flan-t5-base")
     return HuggingFacePipeline(pipeline=generator)
 
-from src.embeddings import build_character_index
+def load_rag_pipeline(index_path="memory/character_index"):
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# rag_pipeline.py
+    # Always rebuild the index from YAML to avoid missing/corrupted files
+    print("[INFO] Rebuilding FAISS index from character.yaml")
+    vectorstore = build_character_index(yaml_path="data/character.yaml", save_path=index_path)
 
-import os
-import yaml
-from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
-from src.ingest import load_documents, split_documents
+    # Optionally, you could try loading saved one, but skip to avoid error
+    # If you prefer load_local fallback instead:
+    # try:
+    #     vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+    # except Exception as e:
+    #     print("[WARN] load_local failed:", e)
+    #     vectorstore = build_character_index(yaml_path="data/character.yaml", save_path=index_path)
 
-def load_rag_pipeline():
-    index_path = "data/faiss_index"
-    embeddings = OpenAIEmbeddings()
-
-    try:
-        # ✅ Try loading existing index
-        vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-    except Exception as e:
-        print(f"[INFO] Could not load FAISS index ({e}). Rebuilding...")
-
-        # ✅ Rebuild index from YAML
-        docs = load_documents("data/character.yaml")
-        chunks = split_documents(docs)
-        vectorstore = FAISS.from_documents(chunks, embeddings)
-
-        # ✅ Save new index
-        os.makedirs(index_path, exist_ok=True)
-        vectorstore.save_local(index_path)
-
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
-
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=retriever,
-        return_source_documents=False
+    qa = RetrievalQA.from_chain_type(
+        llm=load_llm(),
+        retriever=vectorstore.as_retriever(),
+        return_source_documents=True
     )
+    return qa
 
-    return qa_chain
+def ask_character(query, qa_chain):
+    result = qa_chain({"query": query})
+    return result["result"]
