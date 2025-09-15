@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1gFDCGakSwGCV5T4FVi5Brkc5abylZCaM
 """
 
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 import datetime
 import os
