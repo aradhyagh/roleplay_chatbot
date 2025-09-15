@@ -1,54 +1,26 @@
-# src/memory_faiss.py
-
-import os
-import datetime
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain.vectorstores import FAISS
+from langchain.embeddings.openai import OpenAIEmbeddings
 
 class SemanticMemory:
-    def __init__(self, path="memory/faiss_memory"):
-        os.makedirs("memory", exist_ok=True)
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        self.path = path
+    def __init__(self):
+        # Initialize the embeddings object
+        self.embeddings = OpenAIEmbeddings()
 
-        if os.path.exists(path):
-            try:
-                # Load existing FAISS index
-                self.db = FAISS.load_local(
-                    path, self.embeddings, allow_dangerous_deserialization=True
-                )
-            except Exception:
-                # If corrupted, create empty index
-                self.db = self._create_empty_index()
-        else:
-            # First run → create empty index
-            self.db = self._create_empty_index()
+        # Define some sample texts for your roleplay character memory
+        sample_texts = [
+            "I am a friendly wizard who loves helping people with magical advice.",
+            "I enjoy telling stories of ancient kingdoms and magical creatures.",
+            "My goal is to assist you in solving problems using my mystical knowledge."
+        ]
 
-        # Debug: confirm initialization
-        print("🚀 SemanticMemory initialized. Using FAISS index at:", path)
+        # Initialize FAISS vector store with sample texts and embeddings
+        self.db = FAISS.from_texts(sample_texts, self.embeddings)
 
-    def _create_empty_index(self):
-        """Create an empty FAISS index with correct embedding dimension."""
-        import faiss
-        dim = 384  # MiniLM-L6-v2 embedding dimension
-        index = faiss.IndexFlatL2(dim)
-        return FAISS(
-            embedding_function=self.embeddings,
-            index=index,
-            docstore={},
-            index_to_docstore_id={},
-        )
-
-    def add_message(self, role, content):
-        timestamp = datetime.datetime.now().isoformat()
-        text = f"[{role.upper()} @ {timestamp}] {content}"
+    def add_text(self, text):
+        # Add new roleplay dialogue or context to the FAISS memory
         self.db.add_texts([text])
-        self.db.save_local(self.path)
 
-    def retrieve_relevant(self, query, k=3):
-        if not self.db.index.ntotal:
-            return []
+    def retrieve_similar_texts(self, query, k=3):
+        # Retrieve the top-k similar texts from memory
         docs = self.db.similarity_search(query, k=k)
         return [doc.page_content for doc in docs]
