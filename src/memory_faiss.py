@@ -2,10 +2,8 @@
 
 import os
 import datetime
-import faiss
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-
 
 class SemanticMemory:
     def __init__(self, path="memory/faiss_memory"):
@@ -17,20 +15,24 @@ class SemanticMemory:
 
         if os.path.exists(path):
             try:
-                # ✅ Load saved FAISS index if available
+                # Load existing FAISS index
                 self.db = FAISS.load_local(
                     path, self.embeddings, allow_dangerous_deserialization=True
                 )
             except Exception:
-                # ✅ If corrupted, start fresh
+                # If corrupted, create empty index
                 self.db = self._create_empty_index()
         else:
-            # ✅ First run → start with empty index
+            # First run → create empty index
             self.db = self._create_empty_index()
 
+        # Debug: confirm initialization
+        print("🚀 SemanticMemory initialized. Using FAISS index at:", path)
+
     def _create_empty_index(self):
-        """Create an empty FAISS index with correct embedding dimension (384 for MiniLM-L6-v2)."""
-        dim = 384  # HuggingFace MiniLM-L6-v2 embeddings = 384 dims
+        """Create an empty FAISS index with correct embedding dimension."""
+        import faiss
+        dim = 384  # MiniLM-L6-v2 embedding dimension
         index = faiss.IndexFlatL2(dim)
         return FAISS(
             embedding_function=self.embeddings,
