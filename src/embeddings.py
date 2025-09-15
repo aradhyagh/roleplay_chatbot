@@ -14,7 +14,7 @@ from langchain.text_splitter import CharacterTextSplitter
 import os
 
 def build_character_index(yaml_path="data/character.yaml", save_path="memory/character_index"):
-    os.makedirs("memory", exist_ok=True)
+    os.makedirs(save_path, exist_ok=True)
 
     # Load YAML
     with open(yaml_path, "r") as f:
@@ -39,8 +39,9 @@ def build_character_index(yaml_path="data/character.yaml", save_path="memory/cha
     # Create embeddings + FAISS
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_texts(documents, embeddings)
-    vectorstore.save_local(save_path)
 
+    # Save both required files
+    vectorstore.save_local(save_path)
     print(f"[INFO] Character index saved to {save_path}")
 
 if __name__ == "__main__":
