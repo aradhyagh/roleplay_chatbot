@@ -28,10 +28,16 @@ def load_llm():
     generator = pipeline("text2text-generation", model="google/flan-t5-base")
     return HuggingFacePipeline(pipeline=generator)
 
+from src.embeddings import build_character_index
+
 def load_rag_pipeline(index_path="memory/character_index"):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    # 👇 FIXED: added allow_dangerous_deserialization=True
+    # ✅ Check if index exists, if not, build it
+    if not os.path.exists(index_path) or not os.path.exists(os.path.join(index_path, "index.faiss")):
+        print("[INFO] Index not found, building a new one...")
+        build_character_index(yaml_path="data/character.yaml", save_path=index_path)
+
     vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
 
     llm = load_llm()
@@ -42,6 +48,7 @@ def load_rag_pipeline(index_path="memory/character_index"):
         return_source_documents=True
     )
     return qa
+
 
 def ask_character(query, qa_chain):
     result = qa_chain({"query": query})
