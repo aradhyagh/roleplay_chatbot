@@ -14,11 +14,13 @@ from langchain.text_splitter import CharacterTextSplitter
 import os
 
 def build_character_index(yaml_path="data/character.yaml", save_path="memory/character_index"):
+    print("[DEBUG] build_character_index: started")
     os.makedirs(save_path, exist_ok=True)
 
     # Load YAML
     with open(yaml_path, "r") as f:
         character_data = yaml.safe_load(f)
+    print("[DEBUG] YAML loaded")
 
     # Convert YAML → plain text
     def yaml_to_text(data: dict) -> str:
@@ -31,18 +33,21 @@ def build_character_index(yaml_path="data/character.yaml", save_path="memory/cha
         return "\n".join(parts)
 
     character_text = yaml_to_text(character_data)
+    print("[DEBUG] character_text created", character_text[:100])  # show first 100 chars
 
     # Split into chunks
     splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     documents = splitter.split_text(character_text)
+    print(f"[DEBUG] Split into {len(documents)} documents")
 
     # Create embeddings + FAISS
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_texts(documents, embeddings)
+    print("[DEBUG] FAISS.from_texts done")
 
     # Save both required files
     vectorstore.save_local(save_path)
-    print(f"[INFO] Character index saved to {save_path}")
-
+    print("[DEBUG] save_local done, files saved in", save_path)
+    
 if __name__ == "__main__":
     build_character_index()
