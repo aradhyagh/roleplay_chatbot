@@ -7,10 +7,15 @@ Original file is located at
     https://colab.research.google.com/drive/1_R67r1b1LBrJkpwaewImO0-sVGZBCPaX
 """
 
+import os
+from src.embeddings import build_character_index
 import streamlit as st
 from src.rag_pipeline import load_rag_pipeline, ask_character
 from src.memory_faiss import SemanticMemory
 
+if not os.path.exists("memory/character_index"):
+    build_character_index()
+    
 st.set_page_config(page_title="Roleplay Chatbot", page_icon="✨", layout="centered")
 
 if "qa_chain" not in st.session_state:
