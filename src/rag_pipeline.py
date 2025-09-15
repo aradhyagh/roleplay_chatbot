@@ -31,19 +31,22 @@ from src.embeddings import build_character_index
 def load_rag_pipeline(index_path="memory/character_index"):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    # Always rebuild FAISS index (avoids missing file errors on Streamlit Cloud)
-    print("[INFO] Rebuilding FAISS index on startup...")
-    build_character_index(yaml_path="data/character.yaml", save_path=index_path)
+    # Try to build (or re-build) the vectorstore and use it directly
+    print("[INFO] Building/refreshing FAISS vectorstore from YAML (avoids loading pickles).")
+    vectorstore = build_character_index(yaml_path="data/character.yaml", save_path=index_path)
 
-    # Now load the rebuilt index
-    print("[INFO] Loading FAISS index...")
-    vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-    print("[INFO] FAISS index loaded successfully!")
+    # If build_character_index returns a vectorstore, use it directly
+    if vectorstore is None:
+        # fallback: try to load local index (with allow flag)
+        print("[WARN] build_character_index returned None, trying to load saved index.")
+        vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
 
     llm = load_llm()
+
     qa = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=vectorstore.as_retriever(),
         return_source_documents=True
     )
     return qa
+
